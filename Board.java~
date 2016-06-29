@@ -1,0 +1,516 @@
+/*Name: Kuangcong Liu  Student
+ *Login:cs8baoj
+ *Date: 01/23/2015
+ *File: Board.java
+ *Description:
+ *   this program will create a board class with all the information
+ *   we needed, the grid size, the score and our play board.
+ *   With several methods, we could also move the tiles to form larger
+ *   numbers with higher scores.
+ */
+
+//------------------------------------------------------------------//
+// Board.java                                                       //
+//                                                                  //
+// Class used to represent a 2048 game board                        //
+//                                                                  //
+// Author:  Brandon Williams                                        //
+// Date:    1/17/15                                                 //
+//------------------------------------------------------------------//
+
+import java.util.*;
+import java.io.*;
+
+/*
+ * Name: Board class
+ * Purpose: we could build all the information about board here,
+ *    such as the grid size, the score and the play board.
+ * Parameters:None.
+ * Return:Void.
+ */
+public class Board
+{
+    public final int NUM_START_TILES = 2;
+    public final int TWO_PROBABILITY = 90;
+    public final int GRID_SIZE;
+
+    private final Random random;
+    private int[][] grid;
+    private int score;
+
+    /* Constructor: Board
+     * Purpose: Constructs a fresh board with random tiles
+     * Parameter: int boardSize, represents the size of our board.
+     *            Random random, represents the random variable.
+     * Return: void
+     */
+    public Board(int boardSize, Random random)
+    {
+        //assign two parameters to the public final variables
+        this.random = random;
+        this.GRID_SIZE = boardSize;
+
+        //initialize the grid and score variables
+        this.score=0;
+        this.grid=new int[boardSize][boardSize];
+
+        //add starter tiles based on the constant NUM_START_TILES
+        for(int i=0;i<NUM_START_TILES;i++)
+            this.addRandomTile();
+    }
+
+    /* Constructor: GameManager
+     * Purpose: Construct a board based off of an input file
+     * Parameter: String inoutputBoard, represents the file name of the file
+     *                                  we read from.
+     *            Random random, represents the random variable.
+     * Return: void
+     */
+    public Board(String inputBoard, Random random) throws IOException
+    {
+        //assign parameter to final variable
+        this.random = random;
+
+        //read from the input file
+        Scanner input=new Scanner(new File(inputBoard));
+
+        //board size, score, and grid are all initialized based on
+        //the input file.
+        this.GRID_SIZE=input.nextInt();
+        this.score=input.nextInt();
+        for(int i=0;i<GRID_SIZE;i++){
+            for(int j=0;j<GRID_SIZE;j++){
+                this.grid[i][j]=input.nextInt();
+            }
+        }
+    }
+
+    public int getScore()
+    {
+        return score;
+    }
+
+    /*
+     * Name: saveBoard method
+     * Purpose: save my current board to a file
+     * Parameters: type: string, outputBoard, it represents the file name we
+     *        want to save as.
+     * Return:void
+     */
+    public void saveBoard(String outputBoard) throws IOException
+    {
+        //use a PrintWriter object to write to a file
+        PrintWriter output=new PrintWriter(outputBoard);
+
+        //use println() to read from the format we know
+        output.println(this.GRID_SIZE);
+        output.println(this.score);
+        for(int i=0;i<GRID_SIZE;i++){
+            for(int j=0;j<GRID_SIZE;j++){
+                output.print(this.grid[i][j]+" ");
+            }
+            output.println();
+        }
+        //close it to ensure that it is saved
+        output.close();
+    }
+
+    /*
+     * Name:addRandomTile method
+     * Purpose:we write this method to add random tile to an open spot
+     *    on the game board.
+     * Parameters:None
+     * Return:void
+     */
+    public void addRandomTile()
+    {
+        //count the number of available tiles
+        int count=0;
+        for(int i=0;i<GRID_SIZE;i++){
+            for(int j=0;j<GRID_SIZE;j++){
+                //available tile means it is emty, 0.
+                if(grid[i][j]==0)
+                    count=count+1;
+            }
+        }
+        //if count is 0, exit.
+        if(count==0)
+            System.exit(-1);
+
+        //get a random int called location between 0 and count-1
+        int location=random.nextInt(count);
+        //get a random int called value between 0 and 99
+        int value=random.nextInt(100);
+        int number=0;
+
+        //row first, column second
+        for(int i=0;i<GRID_SIZE;i++){
+            for(int j=0;j<GRID_SIZE;j++){
+
+                //keeping count of the empty spaces we find.
+                if(grid[i][j]==0){
+                    //when we hit the location th empty spot,
+                    //place a new tile, according to the TWO_PROBABILITY
+                    if(number==location){
+                        number=number+1;
+                        if(value<TWO_PROBABILITY)
+                            grid[i][j]=2;
+                        else
+                            grid[i][j]=4;
+                    }
+                    number=number+1;
+                }
+            }
+        }
+    }
+
+    /*
+     * Name: isGameOver method
+     * Purpose: a short method that will check to see if the game is over.
+     * Parameters: None.
+     * Return: boolean, which represents whether the game is over.
+     */
+    public boolean isGameOver()
+    {
+        //check to see whether there is any valid moves left
+      if(canMove(Direction.UP)||canMove(Direction.DOWN)||
+                canMove(Direction.LEFT)||canMove(Direction.RIGHT))
+            return false;
+        else{
+            //when the game is over, print out the words "Game Over!"
+            //on a newline
+            System.out.println("Game Over!");
+            return true;
+        }
+    }
+
+    /*
+     * Name: canMove method
+     * Purpose: determine if the board can move in the passed in direction.
+     * Parameters: type: Direction, direction, which represents the direction
+     *    the user wants to move his board.
+     * Return:boolean, which represents whether we could move the board.
+     */
+    public boolean canMove(Direction direction)
+    {
+        //break the problem into smaller pieces,
+        //by writing a specify helper method for each direction.
+        if(direction.equals(Direction.UP)){
+            if(canMoveUp())
+                return true;
+        }
+        else if(direction.equals(Direction.DOWN)){
+            if(canMoveDown())
+                return true;
+        }
+        else if(direction.equals(Direction.LEFT)){
+            if(canMoveLeft())
+                return true;
+        }
+        else if(direction.equals(Direction.RIGHT)){
+            if(canMoveRight())
+                return true;
+        }
+        return false;
+    }
+
+    /*
+     * Name: canMoveLeft
+     * Purpose: check whether the board can be moved left.
+     * Parameters: None.
+     * Return: boolean, which represents whether the board can be moved left.
+     */
+    private boolean canMoveLeft()
+    {
+        //as we are moving left, we will check from left to right in each row
+        for(int i=0;i<GRID_SIZE;i++){
+            //set a sign here, the sign could be true only by finding some
+            //empty points.
+            boolean sign=false;
+
+            //we do not need to check the last column, for it is no use
+            //to have it empty, because though it is empty, no tile can be
+            //moved to it.
+            for(int j=0;j<GRID_SIZE-1;j++){
+
+                //if we find an empty tile in a row, the sign is true.
+                if(grid[i][j]==0)
+                    sign=true;
+
+                //if a tile has a tile of the same value at its right,
+                //while neither of them are 0,
+                //it means the board could be moved left.
+                if(grid[i][j]==grid[i][j+1] && grid[i][j]!=0)
+                    return true;
+
+                //if we find an empty tile in a row, and it has a tile
+                //with none-zero value to its right,
+                //it means the board could be moved left.
+                if(grid[i][j+1]!=0 && sign==true)
+                    return true;
+            }
+        }
+        //If never find a tile that we can move, then return false.
+        return false;
+    }
+
+    /* The following three methods are similiar with the first one,
+     * only with different direction.
+     *
+     *
+     * Name: canMoveRight method
+     * Purpose: check whether the board can be moved right.
+     * Parameters: none.
+     * Return: boolean, which represents whetherthe board can be moved right.
+     */
+    private boolean canMoveRight()
+    {
+        for(int i=0;i<GRID_SIZE;i++){
+            boolean sign=false;
+            for(int j=GRID_SIZE-1;j>0;j--){
+                if(grid[i][j]==0)
+                    sign=true;
+                if(grid[i][j]==grid[i][j-1] && grid[i][j]!=0)
+                    return true;
+                if(grid[i][j-1]!=0 && sign==true)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * Name: canMoveUp mthod
+     * Purpose: check whether the board can be moved up.
+     * Parameters: none.
+     * Return:boolean, which represents whetherthe board can be moved up.
+     */
+    private boolean canMoveUp()
+    {
+        for(int j=0;j<GRID_SIZE;j++){
+            boolean sign=false;
+            for(int i=0;i<GRID_SIZE-1;i++){
+                if(grid[i][j]==0)
+                    sign=true;
+                if(grid[i][j]==grid[i+1][j] && grid[i][j]!=0)
+                    return true;
+                if(grid[i+1][j]!=0 && sign==true)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * Name: canMoveDown method
+     * Purpose: check whether the board can be moved down.
+     * Parameters: none.
+     * Return: boolean, which represents whetherthe board can be moved down.
+     */
+    private boolean canMoveDown()
+    {
+        for(int j=0;j<GRID_SIZE;j++){
+            boolean sign=false;
+            for(int i=GRID_SIZE-1;i>0;i--){
+                if(grid[i][j]==0)
+                    sign=true;
+                if(grid[i][j]==grid[i-1][j] && grid[i][j]!=0)
+                    return true;
+                if(grid[i-1][j]!=0 && sign==true)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * Name: move method
+     * Purpose: move our board to the passed direction.
+     * Parameters: type:Direction, direction, which represents the direction
+     *    we want to move our board to.
+     * Return: boolean, which represents whether there is a valid move.
+     */
+    public boolean move(Direction direction)
+    {
+        //break the problem into smaller pieces,
+        //by writing a specify helper method for each direction.
+        if(canMove(direction)){
+            if(direction.equals(Direction.RIGHT))
+                this.moveRight();
+            else if(direction.equals(Direction.LEFT))
+                this.moveLeft();
+            else if(direction.equals(Direction.UP))
+                this.moveUp();
+            else if(direction.equals(Direction.DOWN))
+                this.moveDown();
+            return true;
+        }
+        else
+            return false;
+    }
+
+    /*
+     * Name: moveRight method
+     * Purpose: move the board right.
+     * Parameters: none.
+     * Return: void.
+     */
+    private void moveRight()
+    {
+        //as we are moving right, we need to move each line from right to left
+        for(int i=GRID_SIZE-1;i>=0;i--){
+
+            //we need a sign to decide whether we have add two none-zero tiles
+            //with the same value before.
+            boolean sign=false;
+
+            //we need to read each line several times, the first few times to
+            //move every tile as much as possible to the right, so that there
+            //is no empty tiles between.
+            //Then we should loop the same line to get the first same tiles
+            //added.
+            for(int m=0;m<GRID_SIZE-1;m++){
+
+                //there is no need to check the right most column
+                for(int j=GRID_SIZE-2;j>=0;j--){
+
+                    //if there is an empty tile at the right side of a tile,
+                    if(grid[i][j+1]==0){
+
+                        //we need to move the original tile to the right,
+                        grid[i][j+1]=grid[i][j];
+
+                        //and assing the value of the original tile to be 0
+                        grid[i][j]=0;
+                    }
+
+                    //if there is two none-zero tiles with the same value,
+                    //and we haven't add two tiles before.
+                    else if(grid[i][j]==grid[i][j+1] && sign==false){
+                        //we should assign the right side tile to be the sum
+                        grid[i][j+1]=2*grid[i][j+1];
+
+                        //and the original one to be 0
+                        grid[i][j]=0;
+                        //we should also record the score, as each time we
+                        //have add two tiles
+                        this.score=this.score+grid[i][j+1];
+
+                        //only if the tiles we added are not empty tiles could
+                        //the sign changed to true.
+                        if(grid[i][j+1]!=0)
+                            sign=true;
+                    }
+                }
+            }
+        }
+    }
+
+    /* The following three methods are similiar with the first one,
+     * only with different directions.
+     *
+     *
+     * Name: moveLeft method
+     * Purpose: move the board left.
+     * Parameters:none.
+     * Return:void.
+     */
+    private void moveLeft()
+    {
+        for(int i=0;i<GRID_SIZE;i++){
+            boolean sign=false;
+            for(int m=0;m<GRID_SIZE-1;m++){
+                for(int j=1;j<GRID_SIZE;j++){
+                    if(grid[i][j-1]==0){
+                        grid[i][j-1]=grid[i][j];
+                        grid[i][j]=0;
+                    }
+                    else if(grid[i][j-1]==grid[i][j] && sign==false){
+                        grid[i][j-1]=grid[i][j-1]*2;
+                        grid[i][j]=0;
+                        this.score=this.score+grid[i][j-1];
+                        if(grid[i][j-1]!=0)
+                            sign=true;
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     * Name: moveUp method
+     * Purpose: move the board up.
+     * Parameters:none.
+     * Return:void.
+     */
+    private void moveUp()
+    {
+        for(int j=0;j<GRID_SIZE;j++){
+            boolean sign=false;
+            for(int m=0;m<GRID_SIZE-1;m++){
+                for(int i=1;i<GRID_SIZE;i++){
+                    if(grid[i-1][j]==0){
+                        grid[i-1][j]=grid[i][j];
+                        grid[i][j]=0;
+                    }
+                    else if(grid[i][j]==grid[i-1][j] && sign==false){
+                        grid[i-1][j]=grid[i-1][j]*2;
+                        grid[i][j]=0;
+                        this.score=this.score+grid[i-1][j];
+                        if(grid[i-1][j]!=0)
+                            sign=true;
+                    }
+                }
+            }
+        }
+        }
+
+    /*
+     * Name: moveDown method
+     * Purpose: move the board down
+     * Parameters: none.
+     * Return: void.
+     */
+    private void moveDown()
+    {
+        for(int j=GRID_SIZE-1;j>=0;j--){
+            boolean sign=false;
+            for(int m=0;m<GRID_SIZE-1;m++){
+                for(int i=GRID_SIZE-2;i>=0;i--){
+                    if(grid[i+1][j]==0){
+                        grid[i+1][j]=grid[i][j];
+                        grid[i][j]=0;
+                    }
+                    else if(grid[i][j]==grid[i+1][j] && sign==false){
+                        grid[i+1][j]=grid[i+1][j]*2;
+                        grid[i][j]=0;
+                        this.score=this.score+grid[i+1][j];
+                        if(grid[i+1][j]!=0)
+                            sign=true;
+                    }
+                }
+            }
+        }
+    }
+    // Return the reference to the 2048 Grid
+    public int[][] getGrid()
+    {
+        return grid;
+    }
+
+    @Override
+        public String toString()
+        {
+            StringBuilder outputString = new StringBuilder();
+            outputString.append(String.format("Score: %d\n", score));
+            for (int row = 0; row < GRID_SIZE; row++)
+            {
+                for (int column = 0; column < GRID_SIZE; column++)
+                    outputString.append(grid[row][column] == 0 ? "    -" :
+                            String.format("%5d", grid[row][column]));
+
+                outputString.append("\n");
+            }
+            return outputString.toString();
+        }
+}
